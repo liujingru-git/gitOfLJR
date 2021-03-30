@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>湖南高速-联网收费中心云门户</title>
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+          <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+        <![endif]-->
+</head>
+
+<body>
+    <div class="page">
+        <div class="header">
+            <div class="company">
+                <img src="images/logo.png" alt="" />
+
+                <!-- <p class="title">湖南高速-联网收费中心云门户</p> -->
+                <!--<p class="sub-title">Canceling the Cloud Platform of Hunan Boundary Toll Station System</p>-->
+            </div>
+        </div>
+        <div class="content">
+            <div class="login-box">
+                <div class="col-md-6 login-left"></div>
+                <div class="col-md-6">
+                    <div class="panel panel-default" style="opacity: 0.95;border:none; position: relative;">
+                        <div class="panel-heading" style="background: #fff;">
+                            <img src="images/WX20200818-144919.png" class="title-img" />
+                            <h3 class="panel-title">
+                                <span></span>
+                                <b>账号密码登录</b>
+
+                            </h3>
+                        </div>
+                        <div class="panel-body">
+                            <form action="" method="POST">
+                                <div id="pw_div">
+                                    <div class="form-group">
+                                        <div class="form-item">
+                                            <img src="images/user.png" />
+                                            <input type="text" class="form-control" id="username" name="username"
+                                            placeholder="用户名">
+                                        </div>
+                                        
+                                        <span id="helpBlock_username" class="help-block"
+                                            style="display: none">用户名不能为空</span>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 10px;">
+                                        <div class="form-item">
+                                            <img src="images/pass.png"/>
+                                            <input type="password" class="form-control" id="password" name="password"
+                                                placeholder="密码">
+                                            <img src="images/show1.png" id="show" style="width: 16px;height: auto;"/>
+                                        </div>
+                                        <span id="helpBlock_password" class="help-block"
+                                            style="display: none">密码不能为空</span>
+                                    </div>
+                                    <div style="text-align: right; margin-bottom:15px">
+                                        <a href="javascript:void(0);">忘记密码？</a>
+                                    </div>
+                                    <span id="helpBlock_form" class="help-block" style="display: none"></span>
+                                    <button id="btn_login" type="button" class="btn btn-primary">登录</button>
+                                </div>
+
+                                <div style="text-align: center; margin-top:45px;">
+                                    <a href="javascript:void(0);">申请接入</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="footer">
+            <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=43010202000184"
+                style="display:inline-block;text-decoration:none;height:20px;line-height:20px;">
+                <p><img src="./images/beian.png">湘公网安备 43010202000184号</p>
+            </a>
+            <p>版权所有：湖南省高速公路集团有限公司 湘ICP备07000300号</p>
+        </div>
+    </div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/util.js"></script>
+    <script src="js/md5.min.js" type="text/javascript" charset="utf-8"></script>
+    <script>
+        //设置localstorage的设置方法   这个方法在数据中加入了时间戳   用于逻辑上使localstorage过期
+        function set(key1, value){
+            //获取时间戳
+            var curTime = new Date().getTime();
+            return localStorage.setItem(key1, JSON.stringify({
+                data: value,
+                time: curTime
+            }));
+        }
+        //设置localstorage的获取方法   exp为过期时间(毫秒)  当获取localstorage时间-设置localstorage时间 > exp时  认为这个localstorage过期了
+        function get(key1, exp) {
+            var data = localStorage.getItem(key1);
+            if( data === null){
+                return "";
+            }
+            console.log(data)
+            //转为对象
+            var dataObj = JSON.parse(data);
+            console.log(dataObj)
+            if(new Date().getTime() - dataObj.time > exp) {
+                console.log("登录信息已过期");
+                return "";
+            } else {
+                console.log("登录信息没过期");
+                //var dataObjDatatoJson = JSON.parse(dataObj.data)
+                return dataObj.data;
+            }
+        }
+        var client_id = Util.getParam("client_id");
+        var redirect_uri = Util.getParam("redirect_uri");
+        if (Util.isEmpty(redirect_uri)) {
+            redirect_uri = "";
+        }
+        var show=true;
+        $(function () {
+            $(window).resize(function () {
+                $('.content').height($(window).height() - 94 - 80);
+            });
+            $('.content').height($(window).height() - 94 - 80);
+            $('.footer').show();
+            $("#username").on("keydown", function () {
+                $(this).parent().removeClass("has-error");
+                $("#helpBlock_username").html("").hide();
+            })
+
+            $("#password").on("keydown", function (key) {
+                $(this).parent().removeClass("has-error");
+                $("#helpBlock_password").html("").hide();
+                if (key.keyCode == 13) {
+                    $("#btn_login").click();
+                }
+            })
+            $("#show").click(function(){
+                if(show){
+                    $("#show").attr("src","images/show.png")
+                    $("#password").prop("type","text");
+                    show=false
+                }else{
+                    $("#show").attr("src","images/show1.png")
+                    $("#password").prop("type","password");
+                    show=true;
+                }
+            })
+            $("#btn_login").on("click", function () {  //点击按钮登录
+                var username = $("#username").val();
+                var password = $("#password").val();
+                if (username == "") {
+                    $("#username").parent().addClass("has-error");
+                    $("#helpBlock_username").html("用户名不能为空").show();
+                    return false;
+                }
+
+                if (password == "") {
+                    $("#password").parent().addClass("has-error");
+                    $("#helpBlock_password").html("密码不能为空").show();
+                    return false;
+                }
+                md5Password = md5(password);
+                
+                $.ajax({
+                    url: Config.Host() + "oauth-server/sso/ssoLogin",
+                    type: "post",
+                    dataType: "json",
+                    data: { "global_client": "sso-web", "client_id": client_id, "username": username, "password": md5Password, "redirect_uri": redirect_uri },
+                    contentType: "application/x-www-form-urlencoded",
+                    beforeSend: function (XHR) {
+                        $("#btn_login").attr("disabled", "disabled")
+                    },
+                    success: function (data, textStatus, jqXHR) {
+                        //接收到返回参数，进行重定向
+                        if (data.code.code === "0") {
+                            if (password == "Abc123") {
+                                set(Config.key.USER_NAME, username);
+                                set(Config.key.PASSWORD, md5Password);
+                                var outUrl = window.location.href.split('?')[1];
+                                if ( outUrl != undefined ) {
+                                    console.log("update.html?" + outUrl);
+                                    window.location.href = "update.html?" + outUrl;
+                                }else{
+                                    window.location.href = "update.html";
+                                }
+                            }else{
+                                if (data.result.redirect_uri != null && data.result.redirect_uri != "") {
+                                    window.location.href = data.result.redirect_uri;
+                                    localStorage.setItem(Config.key.ACCESS_TOKEN, data.result.global_access_token);
+                                    localStorage.setItem(Config.key.REFRESH_TOKEN, data.result.global_refresh_token);
+                                } else {
+                                    $("#helpBlock_form").html("未设置应用重定向地址").show();
+                                }
+                            }
+                        } else {
+                            $("#helpBlock_form").html(data.code.msg).show();
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        $("#helpBlock_form").html("网络请求失败，请稍后再试").show();
+                    },
+                    complete: function (XHR, TS) {
+                        $("#btn_login").removeAttr("disabled")
+                    }
+                });
+            });
+        })
+    </script>
+</body>
+
+</html>

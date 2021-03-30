@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>湖南高速-联网收费中心云门户</title>
+        <!-- Bootstrap -->
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/style.css" rel="stylesheet">
+        <!--[if lt IE 9]>
+          <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+        <![endif]-->
+      </head>
+      <body>
+        <div class="page">
+            <div class="header">
+                <img src="images/logo.png" alt="" />
+                <div class="company">
+                    <p class="title">湖南高速-联网收费中心云门户</p>
+                    <!--<p class="sub-title">Canceling the Cloud Platform of Hunan Boundary Toll Station System</p>-->
+                </div>
+            </div>
+            <div class="content">
+                <div class="col-md-4 login-box">
+                    <div class="panel panel-default" style="opacity: 0.95">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><b>统一登录（<span id="login_type_title">账号密码登录</span>）</b></h3>
+                        </div>
+                        <div class="panel-body">
+                            <form action="" method="POST">
+                                <div id="pw_div">
+                                    <div class="form-group">
+                                        <label for="username">用户名</label>
+                                        <input type="text" class="form-control" id="username" name="username" placeholder="">
+                                        <span id="helpBlock_username" class="help-block" style="display: none">用户名不能为空</span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="password">密码</label>
+                                        <input type="password" class="form-control" id="password" name="password" placeholder="">
+                                        <span id="helpBlock_password" class="help-block" style="display: none">密码不能为空</span>
+                                    </div>
+                                    <span id="helpBlock_form" class="help-block" style="display: none"></span>
+                                    <button id="btn_login" type="button" class="btn btn-success" style="width: 100%;margin-top: 10px;">登录</button>
+                                </div>
+								
+                                <div style="text-align: right; margin-top:25px;">
+                                    <a href="javascript:void(0);">忘记密码？</a>  | <a href="javascript:void(0);">申请接入</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer">
+                <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=43010202000184" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;">
+                    <p><img src="./images/beian.png">湘公网安备 43010202000184号</p>
+                </a>
+                <p>版权所有：湖南省高速公路集团有限公司 湘ICP备07000300号</p>
+            </div>
+        </div>
+
+        <script src="js/jquery.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script src="js/config.js"></script>
+        <script src="js/util.js"></script>
+        <script src="js/md5.min.js" type="text/javascript" charset="utf-8"></script>
+        <script>
+            var client_id = Util.getParam("client_id");
+            var redirect_uri = Util.getParam("redirect_uri");
+            if(Util.isEmpty(redirect_uri)) {
+                redirect_uri = "";
+            }
+            $(function(){
+                $(window).resize(function(){
+                    $('.content').height($(window).height()-94-80);
+                });
+                $('.content').height($(window).height()-94-80);
+                $('.footer').show();
+                $("#username").on("keydown",function(){
+                    $(this).parent().removeClass("has-error");
+                    $("#helpBlock_username").html("").hide();
+                })
+
+                $("#password").on("keydown",function(key){
+                    $(this).parent().removeClass("has-error");
+                    $("#helpBlock_password").html("").hide();
+                    if(key.keyCode == 13){
+                        $("#btn_login").click();
+                    }
+                })
+
+                $("#btn_login").on("click",function(){  //点击按钮登录
+                    var username = $("#username").val();
+                    var password = $("#password").val();
+                    if(username == "") {
+                        $("#username").parent().addClass("has-error");
+                        $("#helpBlock_username").html("用户名不能为空").show();
+                        return false;
+                    }
+
+                    if(password == "") {
+                        $("#password").parent().addClass("has-error");
+                        $("#helpBlock_password").html("密码不能为空").show();
+                        return false;
+                    }
+
+                    md5Password = md5(password);
+                    $.ajax({
+                        url: Config.Host() + "oauth-server/sso/ssoLogin",
+                        type:"post", cache: "false",
+                        dataType:"json",
+                        data:{"global_client":"sso-web","client_id":client_id,
+                                "username":username,"password":md5Password,
+                                "redirect_uri": redirect_uri},
+                        contentType:"application/x-www-form-urlencoded",
+                        beforeSend:function(XHR){
+                            $("#btn_login").attr("disabled","disabled")
+                        },
+                        success:function(data, textStatus, jqXHR){
+                            //接收到返回参数，进行重定向
+							if(data.code.code === "0"){
+							  if(data.result.redirect_uri != null && data.result.redirect_uri != ""){
+							      window.location.href = data.result.redirect_uri;
+                                  localStorage.setItem(Config.key.ACCESS_TOKEN,data.result.global_access_token);
+                                  localStorage.setItem(Config.key.REFRESH_TOKEN,data.result.global_refresh_token);
+                               } else {
+							      $("#helpBlock_form").html("未设置应用重定向地址").show();
+							   }
+							} else {
+							   $("#helpBlock_form").html(data.code.msg).show();
+							}
+                        },
+                        error:function(XMLHttpRequest, textStatus, errorThrown){
+                            $("#helpBlock_form").html("网络请求失败，请稍后再试").show();
+                        },
+                        complete:function(XHR, TS){
+                            $("#btn_login").removeAttr("disabled")
+                        }
+                    });
+                });
+            })
+        </script>
+      </body>
+</html>
